@@ -1,0 +1,81 @@
+blueprint:
+  name: hbav-mode by presence
+  description: Set HBAV mode of heating when people leaving of coming home
+  domain: automation
+  
+  input:
+    person:
+      name: Person
+      description: Person to monitor
+      selector:
+        entity:
+          domain: person
+    climate:
+      name: Climate device
+      description: Device to configure based on presence of person
+      selector:
+        entity:
+          domain: climate
+    away_hours:
+      name: Away hours
+    away_minutes:
+      name: Away minutes
+    away_seconds:
+      name: Away seconds
+
+trigger:
+  - platform: state
+    entity_id: !input person
+    to: not_home
+    for:
+      hours: !input away_hours
+      minutes: !input away_minutes
+      seconds: !input away_seconds
+
+  - platform: state
+    entity_id: !input climate
+
+  - platform: state
+    entity_id: !input person
+    to: home
+
+action:
+  - if:
+      - condition: and
+        conditions:
+          - condition: state
+            entity_id: !input person
+            state: not_home
+            for:
+              hours: !input away_hours
+              minutes: !input away_minutes
+              seconds: !input away_seconds
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: !input climate
+                state: "off"
+    then:
+      - service: climate.set_hvac_mode
+        data:
+          hvac_mode: "off"
+        target:
+          entity_id: !input climate
+
+  - if:
+      - condition: and
+        conditions:
+          - condition: state
+            entity_id: !input person
+            state: home
+          - condition: not
+            conditions:
+              - condition: state
+                entity_id: !input climate
+                state: auto
+    then:
+      - service: climate.set_hvac_mode
+        data:
+          hvac_mode: auto
+        target:
+          entity_id: !input climate
