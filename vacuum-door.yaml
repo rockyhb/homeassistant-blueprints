@@ -22,24 +22,30 @@ blueprint:
       selector:
         select:
           options:
-            - label: Red
-              value: r
-            - label: Green
-              value: g
-            - label: Blue
-              value: b
+            - label: Off
+              value: 200
+            - label: Low
+              value: 201
+            - label: Medium
+              value: 202
+            - label: High
+              value: 203
     custom_mode:
       name: custom_mode
       description: Select custom mode
       selector:
         select:
           options:
-            - label: Red
-              value: r
-            - label: Green
-              value: g
-            - label: Blue
-              value: b
+            - label: Silent
+              value: 101
+            - label: Balanced
+              value: 102
+            - label: Turbo
+              value: 103
+            - label: Max
+              value: 104
+            - label: Off
+              value: 105
     goto_target_1:
     goto_start_target:
     clean_area:
