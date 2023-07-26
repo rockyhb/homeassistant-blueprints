@@ -21,15 +21,25 @@ blueprint:
       description: Select water mode
       selector:
         select:
-        options:
-          - Off
+          options:
+            - label: Red
+              value: r
+            - label: Green
+              value: g
+            - label: Blue
+              value: b
     custom_mode:
       name: custom_mode
       description: Select custom mode
       selector:
         select:
-        options:
-          - Silent
+          options:
+            - label: Red
+              value: r
+            - label: Green
+              value: g
+            - label: Blue
+              value: b
     goto_target_1:
     goto_start_target:
     clean_area:
