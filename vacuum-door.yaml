@@ -1,0 +1,145 @@
+blueprint:
+  name: vacuum-door
+  description: Run vacuum and close doors
+  domain: automation
+  
+  input:
+    vacuum:
+      name: Vacuum
+      description: Vacuum
+      selector:
+        entity:
+          domain: vacuum
+    door:
+      name: Door
+      description: Door which must be opened to allow cleaning
+      selector:
+        entity:
+          domain: binary_sensor
+    water_box_custom_mode:
+      name: water_box_custom_mode
+      description: Select water mode
+      selector:
+        options:
+          - label: Off
+            value: 200
+    custom_mode:
+      name: custom_mode
+      description: Select custom mode
+      selector:
+        options:
+          - label: Silent
+            value: 101
+    goto_target_1:
+    goto_start_target:
+    clean_area:
+
+trigger: []
+condition: []
+action:
+  - service: vacuum.send_command
+    data:
+      command: set_water_box_custom_mode
+      params: !input water_box_custom_mode
+    target:
+      entity_id: !input vacuum
+    enabled: true
+  - service: vacuum.send_command
+    data:
+      command: set_custom_mode
+      params: !input custom_mode
+    target:
+      entity_id: !input vacuum
+    enabled: true
+  - if:
+      - condition: state
+        entity_id: !input door
+        state: "off"
+    then:
+      - service: vacuum.pause
+        data: {}
+        target:
+          entity_id: !input vacuum
+      - wait_for_trigger:
+          - platform: state
+            entity_id:
+              - !input door
+            from: null
+            to: "on"
+        timeout:
+          hours: 1
+          minutes: 0
+          seconds: 0
+          milliseconds: 0
+        continue_on_timeout: false
+  - service: vacuum.send_command
+    data:
+      command: app_goto_target
+      params: !input goto_target_1
+    target:
+      entity_id: !input vacuum
+  - wait_for_trigger:
+      - platform: state
+        entity_id:
+          - !input door
+        from: null
+        to: "off"
+    timeout:
+      hours: 0
+      minutes: 10
+      seconds: 0
+      milliseconds: 0
+    continue_on_timeout: true
+  - service: vacuum.send_command
+    data:
+      command: app_goto_target
+      params: !input goto_start_target
+    target:
+      entity_id: !input vacuum
+  - service: vacuum.send_command
+    data:
+      command: app_zoned_clean
+      params: !input clean_area
+    target:
+      entity_id: !input vacuum
+  - wait_for_trigger:
+      - platform: state
+        entity_id:
+          - !input vacuum
+        to: returning
+        for:
+          hours: 0
+          minutes: 0
+          seconds: 0
+    timeout:
+      hours: 2
+      minutes: 0
+      seconds: 0
+      milliseconds: 0
+    continue_on_timeout: false
+  - if:
+      - condition: state
+        entity_id: !input door
+        state: "off"
+    then:
+      - service: vacuum.pause
+        data: {}
+        target:
+          entity_id: !input vacuum
+      - wait_for_trigger:
+          - platform: state
+            entity_id:
+              - !input door
+            from: null
+            to: "on"
+        timeout:
+          hours: 1
+          minutes: 0
+          seconds: 0
+          milliseconds: 0
+        continue_on_timeout: false
+      - service: vacuum.return_to_base
+        data: {}
+        target:
+          entity_id: !input vacuum
+mode: single
