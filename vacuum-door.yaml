@@ -30,8 +30,7 @@ blueprint:
       selector:
         select:
           options:
-            - label: "Silent"
-              value: "101"
+            - Silent
     goto_target_1:
     goto_start_target:
     clean_area:
