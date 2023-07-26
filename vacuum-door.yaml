@@ -22,7 +22,7 @@ blueprint:
       selector:
         select:
           options:
-            - label: Off
+            - label: "Off"
               value: 200
     custom_mode:
       name: custom_mode
@@ -30,7 +30,7 @@ blueprint:
       selector:
         select:
           options:
-            - label: Silent
+            - label: "Silent"
               value: 101
     goto_target_1:
     goto_start_target:
