@@ -21,9 +21,14 @@ blueprint:
       description: Select water mode
       selector:
         select:
-          options:
-            - label: "Off"
-              value: "200"
+          select:
+            options:
+              - label: Red
+                value: r
+              - label: Green
+                value: g
+              - label: Blue
+                value: b
     custom_mode:
       name: custom_mode
       description: Select custom mode
