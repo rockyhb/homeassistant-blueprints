@@ -23,12 +23,7 @@ blueprint:
         select:
           select:
             options:
-              - label: Red
-                value: r
-              - label: Green
-                value: g
-              - label: Blue
-                value: b
+              - Off
     custom_mode:
       name: custom_mode
       description: Select custom mode
