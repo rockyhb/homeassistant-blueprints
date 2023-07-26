@@ -21,9 +21,8 @@ blueprint:
       description: Select water mode
       selector:
         select:
-          select:
-            options:
-              - Off
+          options:
+            - Off
     custom_mode:
       name: custom_mode
       description: Select custom mode
