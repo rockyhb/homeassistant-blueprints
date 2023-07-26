@@ -19,15 +19,19 @@ blueprint:
     water_box_custom_mode:
       name: water_box_custom_mode
       description: Select water mode
-      options:
-        - label: Off
-          value: 200
+      selector:
+        select:
+          options:
+            - label: Off
+              value: 200
     custom_mode:
       name: custom_mode
       description: Select custom mode
-      options:
-        - label: Silent
-          value: 101
+      selector:
+        select:
+          options:
+            - label: Silent
+              value: 101
     goto_target_1:
     goto_start_target:
     clean_area:
