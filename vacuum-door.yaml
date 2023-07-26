@@ -23,7 +23,7 @@ blueprint:
         select:
           options:
             - label: "Off"
-              value: 200
+              value: "200"
     custom_mode:
       name: custom_mode
       description: Select custom mode
@@ -31,7 +31,7 @@ blueprint:
         select:
           options:
             - label: "Silent"
-              value: 101
+              value: "101"
     goto_target_1:
     goto_start_target:
     clean_area:
