@@ -22,14 +22,14 @@ blueprint:
       selector:
         select:
           options:
-            - label: 'Off'
-              value: '200'
+            - label: "Off"
+              value: "200"
             - label: Low
-              value: '201'
+              value: "201"
             - label: Medium
-              value: '202'
+              value: "202"
             - label: High
-              value: '203'
+              value: "203"
     custom_mode:
       name: custom_mode
       description: Select custom mode
@@ -37,7 +37,7 @@ blueprint:
         select:
           options:
             - label: Silent
-              value: '101'
+              value: "101"
             - label: Balanced
               value: '102'
             - label: Turbo
