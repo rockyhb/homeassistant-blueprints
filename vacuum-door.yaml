@@ -22,7 +22,7 @@ blueprint:
       selector:
         select:
           options:
-            - label: Off
+            - label: 'Off'
               value: '200'
             - label: Low
               value: '201'
