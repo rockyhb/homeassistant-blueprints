@@ -23,7 +23,7 @@ blueprint:
         select:
           select:
             options:
-              - "Off"
+              - "Aus"
     custom_mode:
       name: custom_mode
       description: Select custom mode
