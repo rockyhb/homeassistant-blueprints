@@ -1,81 +1,166 @@
 blueprint:
   name: vacuum-door
-  description: Run vacuum and close doors
+  description: Sauge mit dem Saugroboter und reagiere auf die Türen
   domain: automation
   
   input:
     vacuum:
-      name: Vacuum
-      description: Vacuum
+      name: Saugroboter
+      description: Saugroboter der bedient werden soll
       selector:
         entity:
-          domain: vacuum
+          filter:
+            - domain: vacuum
     door:
-      name: Door
-      description: Door which must be opened to allow cleaning
+      name: Tür
+      description: >
+        Tür die aufgemacht werden muss damit der Roboter reinfahren kann und
+        die geschlossen werden muss, damit er hinter der Tür sauber machen kann.
       selector:
         entity:
-          domain: binary_sensor
-    water_box_custom_mode:
-      name: water_box_custom_mode
-      description: Select water mode
+          filter:
+            - domain: binary_sensor
+    door_needs_closed:
+      name: Tür schließen
+      description: >
+        Muss die Tür geschlossen werden?
+      selector:
+        boolean:
+    vacuum_mode:
+      name: Saugmodus
+      description: Wähle den Saugmodus aus
       selector:
         select:
           options:
-            - label: "Off"
-              value: "200"
-            - label: Low
-              value: "201"
-            - label: Medium
-              value: "202"
-            - label: High
-              value: "203"
-    custom_mode:
-      name: custom_mode
-      description: Select custom mode
-      selector:
-        select:
-          options:
-            - label: Silent
+            - label: "Aus"
+              value: '105'
+            - label: Leise
               value: "101"
-            - label: Balanced
+            - label: Normal
               value: '102'
             - label: Turbo
               value: '103'
             - label: Max
               value: '104'
-            - label: "Off"
-              value: '105'
+    mopping_mode:
+      name: Mob Modus
+      description: Wähle den Mob Modus aus
+      selector:
+        select:
+          options:
+            - label: "Aus"
+              value: "200"
+            - label: Sanft
+              value: "201"
+            - label: Mittel
+              value: "202"
+            - label: Intensiv
+              value: "203"
+    mopping_route:
+      name: Wischroute
+      description: Wähle den Mob Modus aus
+      selector:
+        select:
+          options:
+            - label: "Standard"
+              value: "300"
+            - label: "Gründlich"
+              value: "301"
+            - label: "Gründlich+"
+              value: "303"
+    vacuum_needs_moving_before_start:
+      name: Roboter zur Startposition fahren
+      description: >
+        Muss der Wischroboter zur einer Startposition gefahren werden?
+      selector:
+        boolean:
     goto_target_1:
+      name: Position im Zielraum
+      description: >
+        Position im Zielraum die bei offener Tür angefahren wird
+      selector:
+        object:
+      default:
+        - 123456
+        - 123456
     goto_start_target:
+      name: Startposition im Zielraum
+      description: >
+        Position im Zielraum die bei geschlossener Tür angefahren wird bevor die
+        Reinigung gestartet wird
+      selector:
+        object:
+      default:
+        - 123456
+        - 123456
     clean_area:
+      name: Reinigungsregion
+      description: >
+        Region(en) im Ziel die gereinigt werden sollen.
+      selector:
+        object:
+      default:
+        - - 123456
+          - 123456
+          - 123456
+          - 123456
+          - 1
+
+variables:
+  door: !input door
+  vacuum: !input vacuum
+  mopping_mode: !input mopping_mode
+  vacuum_mode: !input vacuum_mode
+  mopping_route: !input mopping_route
+  door_needs_closed: !input door_needs_closed
+  vacuum_needs_moving_before_start: !input vacuum_needs_moving_before_start
 
 trigger: []
 condition: []
 action:
   - service: vacuum.send_command
+    alias: Spezifiziere Mob Modus
     data:
       command: set_water_box_custom_mode
-      params: !input water_box_custom_mode
+      params: >
+        {{ mopping_mode | int }}
     target:
       entity_id: !input vacuum
     enabled: true
   - service: vacuum.send_command
     data:
       command: set_custom_mode
-      params: !input custom_mode
+      params: >
+        {{ vacuum_mode | int }}
     target:
       entity_id: !input vacuum
     enabled: true
+    alias: Setzte Saugmodus
+  - service: vacuum.send_command
+    data:
+      command: set_mop_mode
+      params: >
+        {{ mopping_route | int }}
+    target:
+      entity_id: !input vacuum
+    enabled: true
+    alias: Setzte Route
   - if:
-      - condition: state
-        entity_id: !input door
-        state: "off"
+      - condition: and
+        conditions:
+          - condition: state
+            entity_id: !input door
+            state: "off"
+          - condition: template
+            value_template: "{{ door_needs_closed }}"
     then:
-      - service: vacuum.pause
-        data: {}
-        target:
-          entity_id: !input vacuum
+      - service: notify.notify
+        data:
+          message: >
+            Bitt die Tür {{ state_attr(door, 'friendly_name') }} öffnen!
+          title: >
+            Tür {{ state_attr(door, 'friendly_name') }} öffnen
+        alias: Erinnerung Tür öffnen
       - wait_for_trigger:
           - platform: state
             entity_id:
@@ -88,36 +173,81 @@ action:
           seconds: 0
           milliseconds: 0
         continue_on_timeout: false
-  - service: vacuum.send_command
-    data:
-      command: app_goto_target
-      params: !input goto_target_1
-    target:
-      entity_id: !input vacuum
-  - wait_for_trigger:
-      - platform: state
-        entity_id:
-          - !input door
-        from: null
-        to: "off"
-    timeout:
-      hours: 0
-      minutes: 10
-      seconds: 0
-      milliseconds: 0
-    continue_on_timeout: true
-  - service: vacuum.send_command
-    data:
-      command: app_goto_target
-      params: !input goto_start_target
-    target:
-      entity_id: !input vacuum
-  - service: vacuum.send_command
-    data:
-      command: app_zoned_clean
-      params: !input clean_area
-    target:
-      entity_id: !input vacuum
+        alias: Warte auf Türöffnung
+  - if:
+      - condition: template
+        value_template: "{{ vacuum_needs_moving_before_start }}"
+    then:
+      - service: vacuum.send_command
+        data:
+          command: app_goto_target
+          params: !input goto_target_1
+        target:
+          entity_id: !input vacuum
+        alias: Fahre in den Raum
+    
+  - if:
+      - condition: template
+        value_template: "{{ door_needs_closed }}"
+    then:
+      - service: notify.notify
+        data:
+          message: >
+            Bitt die Tür {{ state_attr(door, 'friendly_name') }} schließen!
+          title: >
+            Tür {{ state_attr(door, 'friendly_name') }} schließen
+        alias: Erinnerung Tür schließen
+      - wait_for_trigger:
+          - platform: state
+            entity_id:
+              - !input door
+            from: null
+            to: "off"
+        timeout:
+          hours: 0
+          minutes: 10
+          seconds: 0
+          milliseconds: 0
+        continue_on_timeout: true
+        alias: Warte auf Türschließung
+  - if:
+      - condition: template
+        value_template: "{{ vacuum_needs_moving_before_start }}"
+    then:
+      - service: vacuum.send_command
+        data:
+          command: app_goto_target
+          params: !input goto_start_target
+        target:
+          entity_id: !input vacuum
+        alias: Fahre vor die Tür
+      - wait_for_trigger:
+          - platform: state
+            entity_id:
+              - !input vacuum
+            to: idle
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 1
+        timeout:
+          hours: 0
+          minutes: 1
+          seconds: 0
+          milliseconds: 0
+        continue_on_timeout: true
+        alias: Warte auf Bewegung zum Startpunkt
+  - repeat:
+      until: "{{ not is_state(vacuum, 'idle') and repeat.index < 10 }}"
+      sequence:
+        - service: vacuum.send_command
+          data:
+            command: app_zoned_clean
+            params: !input clean_area
+          target:
+            entity_id: !input vacuum
+          alias: Reinige
+        - delay: 5
   - wait_for_trigger:
       - platform: state
         entity_id:
@@ -133,15 +263,36 @@ action:
       seconds: 0
       milliseconds: 0
     continue_on_timeout: false
+    alias: Warte auf Fertigstellung der Reinigung
   - if:
-      - condition: state
-        entity_id: !input door
-        state: "off"
+      - condition: and
+        conditions:
+          - condition: state
+            entity_id: !input door
+            state: "off"
+          - condition: template
+            value_template: "{{ vacuum_needs_moving_before_start }}"
     then:
       - service: vacuum.pause
         data: {}
         target:
           entity_id: !input vacuum
+        alias: Pausiere die Reinigung
+        enabled: false
+      - service: vacuum.send_command
+        data:
+          command: app_goto_target
+          params: !input goto_target_1
+        target:
+          entity_id: !input vacuum
+        alias: Fahre an die Zielposition im Zielraum
+      - service: notify.notify
+        data:
+          message: >
+            Bitt die Tür {{ state_attr(door, 'friendly_name') }} öffnen!
+          title: >
+            Tür {{ state_attr(door, 'friendly_name') }} öffnen!
+        alias: Erinnerung an Türöffnung
       - wait_for_trigger:
           - platform: state
             entity_id:
@@ -154,8 +305,10 @@ action:
           seconds: 0
           milliseconds: 0
         continue_on_timeout: false
+        alias: Warte auf Türöffnung
       - service: vacuum.return_to_base
         data: {}
         target:
           entity_id: !input vacuum
+        alias: Fahre zur Basisstation
 mode: single
